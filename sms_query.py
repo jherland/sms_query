@@ -3,6 +3,9 @@
 # Query the Nokia N900 SMS message (sqlite) database, extracting SMS
 # conversations to/from a given phone number.
 #
+# This file was written in 2011 by Johan Herland (johan@herland.net).
+# It is licensed under the GNU General Public License v3 (or later).
+#
 # Structure of SMS message database table:
 # CREATE TABLE Events (
 #	id             INTEGER PRIMARY KEY,
