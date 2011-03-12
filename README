@@ -1,0 +1,6 @@
+sms_query: Show SMS messages from the message database on a Nokia N900
+
+When I had to send my N900 in for repairs, I really wanted to have access to
+its SMS messages. The N900 stores all incoming and outgoing messages in a
+SQLite database, so I copied the database and wrote this script to display
+all message to/from a given phone number.
