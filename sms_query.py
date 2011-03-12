@@ -52,6 +52,31 @@
 #   therefore probably produces the most accurate sequencing of messages.
 #   Informal inspection of message content reveals that ordering by
 #   "start_time" produces out-of-order messages/conversations.
+#
+# More information deduced from reading the rtcom-eventlogger header files at
+# <URL: http://maemo.gitorious.org/maemo-rtcom/rtcom-eventlogger/trees/master>
+# and browsing the SQLite database:
+#
+# - "service_id" identifies which service is associated with an entry. The
+#   available values are "id"s into the "Service" table, where each service
+#   is described. Relevant values:
+#   - 1: RTCOM_EL_SERVICE_CALL (i.e. voice call)
+#   - 3: RTCOM_EL_SERVICE_SMS  (i.e. SMS message)
+#
+# - "event_type_id" identifies the type of an event entry. The available values
+#   are "id"s into the "EventTypes" table, where each event type is described.
+#   Relevant values:
+#   - 1: RTCOM_EL_EVENTTYPE_CALL        (i.e. voice call)
+#   - 3: RTCOM_EL_EVENTTYPE_CALL_MISSED (i.e. missed voice call)
+#   - 7: RTCOM_EL_EVENTTYPE_SMS_MESSAGE (i.e. SMS message)
+#
+# - "remote_uid" can be cross-referenced with the "Remotes" table to get more
+#   information from its "remote_name" field. (I guess that the "abook_uid"
+#   field can also be useful, although I don't yet know what table/database
+#   it references).
+#
+# - "flags" can probably be looked up in the "Flags" table to deduce their
+#   meaning.
 
 import sys
 import sqlite3
