@@ -136,6 +136,40 @@ class Filter (object):
 		raise NotImplementedError
 
 
+class EventTypeFilter (Filter):
+	"""Filter on event type."""
+
+	ArgRe = re.compile("(calls?|missed|sms)$", re.IGNORECASE)
+
+	def __init__ (self):
+		self.given = set()
+
+	def __str__ (self):
+		return " or ".join(sorted(self.given))
+
+	def sql (self):
+		clauses = []
+		if "call" in self.given:
+			clauses.append('EventTypes.name = "RTCOM_EL_EVENTTYPE_CALL"')
+		if "missed" in self.given:
+			clauses.append('EventTypes.name = "RTCOM_EL_EVENTTYPE_CALL_MISSED"')
+		if "sms" in self.given:
+			clauses.append('EventTypes.name = "RTCOM_EL_EVENTTYPE_SMS_MESSAGE"')
+		if not clauses:
+			return Filter.sql(self) # No filter
+		return "(%s)" % (" OR ".join(clauses))
+
+	def args (self):
+		return ()
+
+	def add (self, arg):
+		arg = arg.lower()
+		if arg == "calls":
+			arg = "call"
+		assert arg in ("call", "missed", "sms")
+		self.given.add(arg)
+
+
 class PhoneNumberFilter (Filter):
 	"""Filter on the given phone numbers."""
 
@@ -167,9 +201,13 @@ def main (args = []):
 	# All command-line arguments are filters on the displayed events.
 	# Arguments are interpreted as follows (case-insensitively):
 	#
+	# - "call" or "calls": Limit to voice calls only
+	# - "missed": Limit to missed voice calls only
+	# - "sms": Limit to SMS messages only
+	#
 	# - "<num>" or "+<num>": Limit to given phone number
 
-	FilterClasses = (PhoneNumberFilter,)
+	FilterClasses = (EventTypeFilter, PhoneNumberFilter)
 	filters = {} # dict: Filter class name -> Filter instance
 
 	for arg in args[1:]:
