@@ -103,13 +103,32 @@ class Filter (object):
 	"""Base class for filters that result in an SQL WHEN clause."""
 
 	def __str__ (self):
-		return "NoFilter"
+		"""Return a human-readable description of what is filtered."""
+		return "(no-op filter)"
 
 	def sql (self):
+		"""Return a SQL WHERE clause implementing this filter.
+
+		The returned clause if joined together with other filters'
+		clauses (using " AND " as a separator), and then embedded into
+		the final SQL statement that is then executed.
+
+		Any '?' placeholders in the returned clause will be replaced by
+		coresponding elements from the list returned by .args().
+		"""
 		return "(1 = ?)"
 
 	def args (self):
+		"""Return list of arguments to resolve placeholders in .sql().
+
+		The returned list MUST have exactly the same length as the
+		number of "?" arguments returned from .sql().
+		"""
 		return (1,)
+
+	def add (self, arg):
+		"""Parse a command-line argument intended for this filter."""
+		raise NotImplementedError
 
 
 class PhoneNumberFilter (Filter):
