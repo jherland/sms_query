@@ -81,6 +81,7 @@
 import sys
 import sqlite3
 import time
+import re
 
 
 DbFilename = "sms.db" # On Nokia N900: /home/user/.rtcom-eventlogger/el-v1.db
@@ -101,6 +102,10 @@ def colorize (color, s):
 
 class Filter (object):
 	"""Base class for filters that result in an SQL WHEN clause."""
+
+	# Regular expression used to identify suitable command-line arguments
+	# for this filter. If it matches, the argument can be passed to .add().
+	ArgRe = re.compile(".*")
 
 	def __str__ (self):
 		"""Return a human-readable description of what is filtered."""
@@ -134,6 +139,8 @@ class Filter (object):
 class PhoneNumberFilter (Filter):
 	"""Filter on the given phone numbers."""
 
+	ArgRe = re.compile("\+?\d+")
+
 	def __init__ (self):
 		self.nums = []
 
@@ -157,14 +164,24 @@ class PhoneNumberFilter (Filter):
 
 
 def main (args = []):
-	pnf = PhoneNumberFilter()
-	pnf.add(args[1])
-	filters = [pnf]
+	# All command-line arguments are filters on the displayed events.
+	# Arguments are interpreted as follows (case-insensitively):
+	#
+	# - "<num>" or "+<num>": Limit to given phone number
+
+	FilterClasses = (PhoneNumberFilter,)
+	filters = {} # dict: Filter class name -> Filter instance
+
+	for arg in args[1:]:
+		for Class in FilterClasses:
+			if Class.ArgRe.match(arg):
+				f = filters.setdefault(Class.__name__, Class())
+				f.add(arg)
 
 	filter_descs = [] # Human-readable description of applied filters
 	filter_clauses = [] # SQL clauses of applied filters
 	filter_args = [] # List of SQL statement arguments from applied filters
-	for f in filters:
+	for f in filters.itervalues():
 		filter_descs.append(str(f))
 		filter_clauses.append(f.sql())
 		filter_args.extend(f.args())
