@@ -268,19 +268,22 @@ SELECT	EventTypes.name,
 	Events.storage_time,
 	Events.outgoing,
 	Events.remote_uid,
+	Remotes.remote_name,
 	Events.free_text
-FROM EventTypes, Events
+FROM EventTypes, Remotes, Events
 WHERE Events.event_type_id = EventTypes.id
+  AND Events.local_uid = Remotes.local_uid
+  AND Events.remote_uid = Remotes.remote_uid
 %s
 ORDER BY Events.id
 """ % ("".join([" AND " + f for f in filter_clauses])), filter_args)
 
 	print "* Voice/SMS activity filtered by %s:" % (", ".join(filter_descs))
-	print "Date & Time (UTC)  Dir Phone #     Contents"
-	print "-------------------------------------------"
+	print "Date & Time (UTC)   Dir      Phone # Name            Contents"
+	print "-------------------+---+------------+---------------+--------"
 	numcolors = ("red", "yellow", "green", "blue", "magenta")
 	num2color = {} # dict: phone # -> color
-	for event_type, timestamp, outgoing, phonenum, text in c:
+	for event_type, timestamp, outgoing, phonenum, name, text in c:
 		if event_type == "RTCOM_EL_EVENTTYPE_CALL":
 			assert not text, "%s: '%s'" % (event_type, text)
 			text = colorize("green", "<Voice call>")
@@ -292,11 +295,14 @@ ORDER BY Events.id
 				text = colorize("red", "<No contents>")
 		else:
 			text = colorize("red", "<Unknown event type: %s>" % (event_type) + (text or ""))
+		if not name:
+			name = phonenum
 		t = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(timestamp))
 		arrow = outgoing and colorize("green", ">>>") or colorize("red", "<<<")
 		numcolor = num2color.setdefault(phonenum, numcolors[len(num2color) % len(numcolors)])
 		pnum = colorize(numcolor, phonenum.rjust(12))
-		print "%19s %s %s %s" % (t, arrow, pnum, text)
+		name = colorize("blue", name.ljust(15))
+		print t, arrow, pnum, name, text
 	c.close()
 
 
