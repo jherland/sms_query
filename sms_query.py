@@ -213,7 +213,8 @@ ORDER BY Events.id
 			assert not text
 			text = colorize("yellow", "<Missed voice call>")
 		elif event_type == "RTCOM_EL_EVENTTYPE_SMS_MESSAGE":
-			assert text
+			if not text:
+				text = colorize("red", "<No contents>")
 		else:
 			text = colorize("red", "<Unknown event type: %s>" % (event_type) + (text or ""))
 		t = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(timestamp))
