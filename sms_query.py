@@ -86,6 +86,8 @@ import re
 
 DbFilename = "sms.db" # On Nokia N900: /home/user/.rtcom-eventlogger/el-v1.db
 
+CountryPrefix = "+47" # Default phone number country prefix
+
 AnsiColors = {
 	"red":     "\033[91m",
 	"green":   "\033[92m",
@@ -223,10 +225,10 @@ class PhoneNumberFilter (Filter):
 
 	def add (self, phonenum):
 		self.nums.append(phonenum)
-		if phonenum.startswith("+47"):
-			self.nums.append(phonenum[3:])
+		if phonenum.startswith(CountryPrefix):
+			self.nums.append(phonenum[len(CountryPrefix):])
 		else:
-			self.nums.append("+47" + phonenum)
+			self.nums.append(CountryPrefix + phonenum)
 
 
 def main (args = []):
