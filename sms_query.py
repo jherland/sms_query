@@ -230,6 +230,29 @@ class PhoneNumberFilter (Filter):
 			self.nums.append(CountryPrefix + phonenum)
 
 
+class NameFilter (Filter):
+	"""Filter on names/strings in list of remotes/contacts."""
+
+	ArgRe = re.compile(".*")
+
+	def __init__ (self):
+		self.terms = set()
+
+	def __str__ (self):
+		return "sender/recipient containing " + \
+		       " or ".join(["'%s'" % (t) for t in self.terms])
+
+	def sql (self):
+		assert self.terms
+		return "(%s)" % (" OR ".join(["Remotes.remote_name LIKE ?" for t in self.terms]))
+
+	def args (self):
+		return ["%%%s%%" % (t) for t in self.terms]
+
+	def add (self, term):
+		self.terms.add(term.lower())
+
+
 def main (args = []):
 	# All command-line arguments are filters on the displayed events.
 	# Arguments are interpreted as follows (case-insensitively):
@@ -242,8 +265,10 @@ def main (args = []):
 	# - "out" or "outgoing": Limit to outgoing events only
 	#
 	# - "<num>" or "+<num>": Limit to given phone number
+	#
+	# - <anything>: Search for string in address book (list of remote names)
 
-	FilterClasses = (EventTypeFilter, DirectionFilter, PhoneNumberFilter)
+	FilterClasses = (EventTypeFilter, DirectionFilter, PhoneNumberFilter, NameFilter)
 	filters = {} # dict: Filter class name -> Filter instance
 
 	for arg in args[1:]:
