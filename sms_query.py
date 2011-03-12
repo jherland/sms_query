@@ -251,6 +251,7 @@ def main (args = []):
 			if Class.ArgRe.match(arg):
 				f = filters.setdefault(Class.__name__, Class())
 				f.add(arg)
+				break
 
 	filter_descs = [] # Human-readable description of applied filters
 	filter_clauses = [] # SQL clauses of applied filters
