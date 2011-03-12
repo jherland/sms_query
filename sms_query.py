@@ -139,7 +139,7 @@ class Filter (object):
 class PhoneNumberFilter (Filter):
 	"""Filter on the given phone numbers."""
 
-	ArgRe = re.compile("\+?\d+")
+	ArgRe = re.compile("\+?\d+$")
 
 	def __init__ (self):
 		self.nums = []
@@ -189,7 +189,11 @@ def main (args = []):
 	conn = sqlite3.connect(DbFilename)
 	c = conn.cursor()
 	c.execute("""\
-SELECT EventTypes.name, Events.storage_time, Events.outgoing, Events.free_text
+SELECT	EventTypes.name,
+	Events.storage_time,
+	Events.outgoing,
+	Events.remote_uid,
+	Events.free_text
 FROM EventTypes, Events
 WHERE Events.event_type_id = EventTypes.id
   AND %s
@@ -197,9 +201,11 @@ ORDER BY Events.id
 """ % (" AND ".join(filter_clauses)), filter_args)
 
 	print "* Voice/SMS activity filtered by %s:" % (", ".join(filter_descs))
-	print "Date & Time (UTC)  Dir Contents"
-	print "-------------------------------"
-	for event_type, timestamp, outgoing, text in c:
+	print "Date & Time (UTC)  Dir Phone #     Contents"
+	print "-------------------------------------------"
+	numcolors = ("red", "yellow", "green", "blue", "magenta")
+	num2color = {} # dict: phone # -> color
+	for event_type, timestamp, outgoing, phonenum, text in c:
 		if event_type == "RTCOM_EL_EVENTTYPE_CALL":
 			assert not text, "%s: '%s'" % (event_type, text)
 			text = colorize("green", "<Voice call>")
@@ -210,9 +216,11 @@ ORDER BY Events.id
 			assert text
 		else:
 			text = colorize("red", "<Unknown event type: %s>" % (event_type) + (text or ""))
-		t = time.gmtime(timestamp)
+		t = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(timestamp))
 		arrow = outgoing and colorize("green", "->") or colorize("red", "<-")
-		print "%-19s %2s %s" % (time.strftime("%Y-%m-%d %H:%M:%S", t), arrow, text)
+		numcolor = num2color.setdefault(phonenum, numcolors[len(num2color) % len(numcolors)])
+		pnum = colorize(numcolor, phonenum.rjust(11))
+		print "%19s %s %s %s" % (t, arrow, pnum, text)
 	c.close()
 
 
