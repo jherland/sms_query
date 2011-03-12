@@ -218,9 +218,9 @@ ORDER BY Events.id
 		else:
 			text = colorize("red", "<Unknown event type: %s>" % (event_type) + (text or ""))
 		t = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(timestamp))
-		arrow = outgoing and colorize("green", "->") or colorize("red", "<-")
+		arrow = outgoing and colorize("green", ">>>") or colorize("red", "<<<")
 		numcolor = num2color.setdefault(phonenum, numcolors[len(num2color) % len(numcolors)])
-		pnum = colorize(numcolor, phonenum.rjust(11))
+		pnum = colorize(numcolor, phonenum.rjust(12))
 		print "%19s %s %s %s" % (t, arrow, pnum, text)
 	c.close()
 
