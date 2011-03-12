@@ -113,15 +113,31 @@ def main (args = []):
 	phonenums = processPhoneNum(phonenum)
 	conn = sqlite3.connect(DbFilename)
 	c = conn.cursor()
-	c.execute("SELECT storage_time, outgoing, free_text FROM Events WHERE %s ORDER BY id" % (" OR ".join(["remote_uid=?" for n in phonenums])), phonenums)
-	print "* SMS messages to/from phone number %s:" % (phonenum)
+	c.execute("""\
+SELECT EventTypes.name, Events.storage_time, Events.outgoing, Events.free_text
+FROM EventTypes, Events
+WHERE Events.event_type_id = EventTypes.id
+  AND (%s)
+ORDER BY Events.id
+""" % (" OR ".join(["remote_uid=?" for n in phonenums])), phonenums)
+
+	print "* Voice/SMS activity to/from phone number %s:" % (phonenum)
 	print "Date & Time (UTC)  Dir Contents"
 	print "-------------------------------"
-	for timestamp, outgoing, text in c:
+	for event_type, timestamp, outgoing, text in c:
+		if event_type == "RTCOM_EL_EVENTTYPE_CALL":
+			assert not text, "%s: '%s'" % (event_type, text)
+			text = colorize("green", "<Voice call>")
+		elif event_type == "RTCOM_EL_EVENTTYPE_CALL_MISSED":
+			assert not text
+			text = colorize("yellow", "<Missed voice call>")
+		elif event_type == "RTCOM_EL_EVENTTYPE_SMS_MESSAGE":
+			assert text
+		else:
+			text = colorize("red", "<Unknown event type: %s>" % (event_type) + (text or ""))
 		t = time.gmtime(timestamp)
-		color = outgoing and "green" or "red"
-		output = "%-19s %2s %s" % (time.strftime("%Y-%m-%d %H:%M:%S", t), outgoing and "->" or "<-", text)
-		print colorize(color, output)
+		arrow = outgoing and colorize("green", "->") or colorize("red", "<-")
+		print "%-19s %2s %s" % (time.strftime("%Y-%m-%d %H:%M:%S", t), arrow, text)
 	c.close()
 
 
