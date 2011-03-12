@@ -150,7 +150,7 @@ class PhoneNumberFilter (Filter):
 	def sql (self):
 		if not self.nums:
 			return Filter.sql(self)
-		return "(%s)" % (" OR ".join(["remote_uid = ?" for n in self.nums]))
+		return "(%s)" % (" OR ".join(["Events.remote_uid = ?" for n in self.nums]))
 
 	def args (self):
 		return self.nums
