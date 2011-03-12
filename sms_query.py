@@ -196,9 +196,9 @@ SELECT	EventTypes.name,
 	Events.free_text
 FROM EventTypes, Events
 WHERE Events.event_type_id = EventTypes.id
-  AND %s
+%s
 ORDER BY Events.id
-""" % (" AND ".join(filter_clauses)), filter_args)
+""" % ("".join([" AND " + f for f in filter_clauses])), filter_args)
 
 	print "* Voice/SMS activity filtered by %s:" % (", ".join(filter_descs))
 	print "Date & Time (UTC)  Dir Phone #     Contents"
