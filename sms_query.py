@@ -99,29 +99,68 @@ def colorize (color, s):
 	return AnsiColors[color] + s + AnsiColors["stop"]
 
 
-def processPhoneNum (phonenum):
-	ret = [phonenum]
-	if phonenum.startswith("+47"):
-		ret.append(phonenum[3:])
-	else:
-		ret.append("+47" + phonenum)
-	return ret
+class Filter (object):
+	"""Base class for filters that result in an SQL WHEN clause."""
+
+	def __str__ (self):
+		return "NoFilter"
+
+	def sql (self):
+		return "(1 = ?)"
+
+	def args (self):
+		return (1,)
+
+
+class PhoneNumberFilter (Filter):
+	"""Filter on the given phone numbers."""
+
+	def __init__ (self):
+		self.nums = []
+
+	def __str__ (self):
+		return "phone# in (%s)" % (", ".join(self.nums))
+
+	def sql (self):
+		if not self.nums:
+			return Filter.sql(self)
+		return "(%s)" % (" OR ".join(["remote_uid = ?" for n in self.nums]))
+
+	def args (self):
+		return self.nums
+
+	def add (self, phonenum):
+		self.nums.append(phonenum)
+		if phonenum.startswith("+47"):
+			self.nums.append(phonenum[3:])
+		else:
+			self.nums.append("+47" + phonenum)
 
 
 def main (args = []):
-	phonenum = args[1]
-	phonenums = processPhoneNum(phonenum)
+	pnf = PhoneNumberFilter()
+	pnf.add(args[1])
+	filters = [pnf]
+
+	filter_descs = [] # Human-readable description of applied filters
+	filter_clauses = [] # SQL clauses of applied filters
+	filter_args = [] # List of SQL statement arguments from applied filters
+	for f in filters:
+		filter_descs.append(str(f))
+		filter_clauses.append(f.sql())
+		filter_args.extend(f.args())
+
 	conn = sqlite3.connect(DbFilename)
 	c = conn.cursor()
 	c.execute("""\
 SELECT EventTypes.name, Events.storage_time, Events.outgoing, Events.free_text
 FROM EventTypes, Events
 WHERE Events.event_type_id = EventTypes.id
-  AND (%s)
+  AND %s
 ORDER BY Events.id
-""" % (" OR ".join(["remote_uid=?" for n in phonenums])), phonenums)
+""" % (" AND ".join(filter_clauses)), filter_args)
 
-	print "* Voice/SMS activity to/from phone number %s:" % (phonenum)
+	print "* Voice/SMS activity filtered by %s:" % (", ".join(filter_descs))
 	print "Date & Time (UTC)  Dir Contents"
 	print "-------------------------------"
 	for event_type, timestamp, outgoing, text in c:
