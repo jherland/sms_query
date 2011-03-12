@@ -216,8 +216,7 @@ class PhoneNumberFilter (Filter):
 		return "phone# in (%s)" % (", ".join(self.nums))
 
 	def sql (self):
-		if not self.nums:
-			return Filter.sql(self)
+		assert self.nums
 		return "(%s)" % (" OR ".join(["Events.remote_uid = ?" for n in self.nums]))
 
 	def args (self):
