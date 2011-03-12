@@ -169,6 +169,39 @@ class EventTypeFilter (Filter):
 		self.given.add(arg)
 
 
+class DirectionFilter (Filter):
+	"""Filter on event direction (incoming vs. outgoing)."""
+
+	ArgRe = re.compile("(in(coming)?|out(going)?)$", re.IGNORECASE)
+
+	def __init__ (self):
+		self.given = set()
+
+	def __str__ (self):
+		return " or ".join(sorted(self.given))
+
+	def sql (self):
+		clauses = []
+		if "in" in self.given:
+			clauses.append('Events.outgoing = 0')
+		if "out" in self.given:
+			clauses.append('Events.outgoing = 1')
+		assert clauses
+		return "(%s)" % (" OR ".join(clauses))
+
+	def args (self):
+		return ()
+
+	def add (self, arg):
+		arg = arg.lower()
+		if arg == "incoming":
+			arg = "in"
+		elif arg == "outgoing":
+			arg = "out"
+		assert arg in ("in", "out")
+		self.given.add(arg)
+
+
 class PhoneNumberFilter (Filter):
 	"""Filter on the given phone numbers."""
 
@@ -204,9 +237,12 @@ def main (args = []):
 	# - "missed": Limit to missed voice calls only
 	# - "sms": Limit to SMS messages only
 	#
+	# - "in" or "incoming": Limit to incoming events only
+	# - "out" or "outgoing": Limit to outgoing events only
+	#
 	# - "<num>" or "+<num>": Limit to given phone number
 
-	FilterClasses = (EventTypeFilter, PhoneNumberFilter)
+	FilterClasses = (EventTypeFilter, DirectionFilter, PhoneNumberFilter)
 	filters = {} # dict: Filter class name -> Filter instance
 
 	for arg in args[1:]:
