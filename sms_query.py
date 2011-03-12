@@ -155,8 +155,7 @@ class EventTypeFilter (Filter):
 			clauses.append('EventTypes.name = "RTCOM_EL_EVENTTYPE_CALL_MISSED"')
 		if "sms" in self.given:
 			clauses.append('EventTypes.name = "RTCOM_EL_EVENTTYPE_SMS_MESSAGE"')
-		if not clauses:
-			return Filter.sql(self) # No filter
+		assert clauses
 		return "(%s)" % (" OR ".join(clauses))
 
 	def args (self):
