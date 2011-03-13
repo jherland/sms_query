@@ -1,9 +1,73 @@
-sms_query: Show SMS messages from the message database on a Nokia N900
+sms_query: Show SMS messages and call events from the databse of a Nokia N900.
 
 When I had to send my N900 in for repairs, I really wanted to have access to
-its SMS messages. The N900 stores all incoming and outgoing messages in a
-SQLite database, so I copied the database and wrote this script to display
-all message to/from a given phone number.
+its SMS messages. The N900 stores all incoming and outgoing SMS messages and
+call events (incluing missed incoming calls) in a SQLite database, so I
+copied the database and wrote this script to display all message and events
+to/from a given contact.
+
+sms_query.py takes zero or more arguments to filter the list of events. The
+following filter formats are implemented:
+
+
+Event type filters:
+
+- "call" or "calls": include (non-missed) voice calls in output
+
+- "missed":  include incoming missed voice calls in output
+
+- "sms": include SMS (text) messages in output
+
+
+Direction filters:
+
+- "in" or "incoming": include incoming events in output
+
+- "out" or "outgoing": include outgoing events in output
+
+
+Phone number filters:
+
+- "<num>" or "+<num>": Any numeric term (including terms starting with a '+')
+  are interpreted as a phone number. A default country code (+47) will be
+  automatically added to (or subtracted from) the phone number, meaning that
+  if you give one of "12345678" or "+4712345678", phone numbers matching
+  _either_ "12345678" or "+4712345678" will be returned.
+
+
+Remote name filters:
+
+- Any other search term will be searched for (case-insensitively) in the list
+  of remote names (the list of remote senders/recipients of events). This list
+  typically includes most names from your contact list, so typing someone's
+  name will usually do the Right Thing (tm).
+
+
+With no arguments given, sms_query.py simply prints _all_ stored events.
+
+
+Examples:
+
+- "sms_query.py" prints all stored events
+
+- "sms_query.py 12345678" prints all events to/from phone numbers 12345678 or
+  +4712345678
+
+- "sms_query.py +4712345678" (same as above)
+
+- "sms_query.py missed" prints all missed voice calls
+
+- "sms_query.py out" prints all outgoing events
+
+- "sms_query.py smith" prints all events to/from a remote name contaning
+  "smith"
+
+- "sms_query.py sms out smith" prints outgoing SMS messages to a remote name
+  containing "smith"
+
+- "sms_query.py smith call jones in" prints incoming voice calls from either
+  "smith" or "jones"
+
 
 sms_query.py was written in 2011 by Johan Herland (johan@herland.net).
 It is licensed under the GNU General Public License v3 (or later).

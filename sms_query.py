@@ -1,12 +1,12 @@
 #!/usr/bin/env python2
 #
-# Query the Nokia N900 SMS message (sqlite) database, extracting SMS
-# conversations to/from a given phone number.
+# Query the Nokia N900 rtcom-eventlogger (sqlite) database, extracting SMS
+# message and voice call events filtered by the given command-line arguments.
 #
 # This file was written in 2011 by Johan Herland (johan@herland.net).
 # It is licensed under the GNU General Public License v3 (or later).
 #
-# Structure of SMS message database table:
+# Structure of then rtcom-eventlogger voice/SMS events database table:
 # CREATE TABLE Events (
 #	id             INTEGER PRIMARY KEY,
 #	service_id     INTEGER NOT NULL,
@@ -30,7 +30,7 @@
 #
 # Inspection of an instance of this table reveals the following insights:
 #
-# - "outgoing" is 0 for incoming messages, 1 for outgoing messages.
+# - "outgoing" is 0 for incoming events, 1 for outgoing events.
 #
 # - "remote_uid" holds the phone number of the remote end. For Norwegian phone
 #   numbers, the format is either "+4712345678" or "12345678" (i.e. with or
@@ -41,7 +41,7 @@
 # - "storage_time", "start_time" and "end_time" all hold Unix-style integer
 #   timestamps. All of them seem to be in UTC time.
 #
-# - "end_time" is 0 for outgoing messages. For incoming messages it is either
+# - "end_time" is 0 for outgoing events. For incoming SMS messages it is either
 #   equal to, or slightly precedes "storage_time" (0 - 2 seconds).
 #
 # - "start_time" is identical to "storage_time" for outgoing messages. For
@@ -255,18 +255,7 @@ class NameFilter (Filter):
 
 def main (args = []):
 	# All command-line arguments are filters on the displayed events.
-	# Arguments are interpreted as follows (case-insensitively):
-	#
-	# - "call" or "calls": Limit to voice calls only
-	# - "missed": Limit to missed voice calls only
-	# - "sms": Limit to SMS messages only
-	#
-	# - "in" or "incoming": Limit to incoming events only
-	# - "out" or "outgoing": Limit to outgoing events only
-	#
-	# - "<num>" or "+<num>": Limit to given phone number
-	#
-	# - <anything>: Search for string in address book (list of remote names)
+	# See README for a complete list of argument categories/formats.
 
 	FilterClasses = (EventTypeFilter, DirectionFilter, PhoneNumberFilter, NameFilter)
 	filters = {} # dict: Filter class name -> Filter instance
